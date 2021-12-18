@@ -9,8 +9,8 @@ Not suitable for children.
 I decided to post the source code in case others making games in Adventuron want to add a similar feature in their game, or see how it works. Please feel free to take snippets and use it for your own games (no credit needed). Just don't take the whole thing or very large chunks and call it your own - that's no fun! Note that this was written for the Adventuron betabeta version, which is slightly different from the current standard classroom.
 
 ## Links
-[~Play the game~](https://eldritchrenaissancecake.itch.io/the-markus-polo-hostage-situation)  
-[~Learn all about Adventuron~](https://adventuron.io/)  
-[~Join the Adventuron Discord~](https://discord.gg/QWxVmNvkC7)  
-[~Follow me on other platforms~](https://linktr.ee/EldritchRenaissanceCake)  
+[\~Play the game\~](https://eldritchrenaissancecake.itch.io/the-markus-polo-hostage-situation)  
+[\~Learn all about Adventuron\~](https://adventuron.io/)  
+[\~Join the Adventuron Discord\~](https://discord.gg/QWxVmNvkC7)  
+[\~Follow me on other platforms\~](https://linktr.ee/EldritchRenaissanceCake)  
 
