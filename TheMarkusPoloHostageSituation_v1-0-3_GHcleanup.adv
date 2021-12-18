@@ -1,0 +1,1532 @@
+################################################
+################################################
+###                                          ###
+### ~~~ THE MARKUS POLO HOSTAGE SITUATION~~~ ###
+###          ~~ LD49 JAM GAME ~~             ###
+###            ~  Oct 2021  ~                ###
+###                                          ###
+###           Coding by                      ###
+###             Chris Hay aka E.R.C.         ###
+###                                          ###
+###           Art and font by                ###
+###             mig-moog                     ###
+###                                          ###
+###           Music and sounds by            ###
+###            Nat aka Nathanael Wsiaki      ###
+###                                          ###
+###       Story and writing                  ###
+###         a team effort                    ###
+###                                          ###
+################################################
+################################################
+
+# IMPORTANT: All code is for this "betabeta" version of adventuron! slightly different for other versions
+# https://adventuron.io/betabeta/
+
+######################################
+#  Game Information                  #
+######################################
+
+## This information is used when packaging the html file
+## and for determining the key to use for save slots in 
+## the browser (the uuid stops save game collisions)
+
+game_information {
+
+   game_name        = The Markus Polo Hostage Situation
+   game_shortname   = LD49
+   written_by       = LD49 team (Chris Hay aka Eldritch Renaissance Cake, Mig-Moog, Nathanael Wsiaki)
+   year_of_original = 2021
+   year_of_release  = 2021
+   # https://www.uuidgenerator.net/
+   # v4 uuid
+   # This is unique for LD49
+   uuid           = 18503031-225f-4d49-9c00-8d146a182cb3
+   short_synopsis   = Investigate a hostage-taker to diffuse an unstable situation.
+   game_version     = 1.0.3
+   compatibility_version = 2
+   # https://adventuron.io/betabeta/
+   
+}
+
+######################################
+#  Game Settings                     #
+######################################
+
+# Chris Ainsley recommends putting this in, so images are pre-cached and they won't "pop" in a second late each time a new one is encountered.
+game_settings {
+   precache_strategy = precache_all
+   image_load_strategy = synchronous
+}
+
+###############################
+## THEME                     ##
+###############################
+
+themes {
+   
+   LD49_theme : theme {
+
+      theme_settings {
+         font            = userfont_schmucksymbols
+         layout          = SB G LOCK D O
+         layout_mobile   = SB G LOCK D O
+         columns         = 80
+         keyboard_click  = off
+         success_jingle  = off
+         failure_jingle  = off
+         wingame_jingle  = off
+         losegame_jingle = off
+      }
+      
+      colors {
+         pen              = #9ef
+         paper            = #003
+         status_bar_paper = #04b
+         status_bar_pen   = #003
+      }
+ 
+# Screen - see other games for examples
+       screen {
+         paragraph_spacing_multiplier = 0.5
+         padding_horz                 = 0
+      }
+
+
+      system_messages {
+      }
+
+      status_bar {
+         // If you want to display a per-location header in the status
+         // bar then comment out the fixed text line above, and uncomment this line
+         // Each location will need header="" specifying too
+         //: header_text;
+         : header_text;
+         # comment out the next line if decide not to show score (note is associated with strings section!)
+         : dynamic_text "progress_topright" ;
+         
+      }
+   # LD49_theme end bracket
+   }
+   
+# This is for when you want the text to "type" out word by word (put spaces between each word to do letter by letter)
+   stagger_theme: theme {
+      extends = LD49_theme
+      theme_settings {
+      experimental_default_stagger_mode = true
+      }
+   }
+
+}
+
+######################################
+#  Strings                           #
+######################################
+
+strings {
+   // NOTE : This syntax is due to change (slightly) in later revisions of Adventuron.
+
+   progress_topright : dynamic_string {(
+   "Progress: " + int_progress + "/10"
+   )}
+   
+   str_username : string "Any string value" ;
+   
+   str_websearch : string "Any string value" ;
+   
+}
+
+
+######################################
+#  Integers                          #
+######################################
+
+integers {
+   
+   # make an integer to count your progress
+   int_progress : integer "0" ;
+   
+   # to give a hint if they get stuck in this part of the game...
+   int_websearchattempts : integer "0" ;
+   
+}
+
+
+######################################
+# on_startup                         #
+######################################
+
+## The on_startup hook runs at the start of the game, one time per game.
+
+on_startup {
+
+
+# Title Graphic!
+
+   # line gap for aesthetics, and stop any sounds if still playing from previous playthrough
+#   : stop_music ;
+#   : stop_incidental ;
+   : print " " ;
+   : play_music sound = "music_loop";
+   : print_graphic "title_png" width = "40" align = "center" ;
+
+   
+# Text title info w music
+   : print "^c^<~~ The Markus Polo Hostage Situation ~~<#ff9>>\n\n<Code by Chris Hay (E.R.C.)<#9ef>>\n<Art by mig-moog<#9ef>>\n<Audio by Nat (Nathanael Wsiaki)<#9ef>>\n<Made with Adventuron<#9ef>>\n\n<Warning: This game includes adult language and themes, and is not suitable for children.<#9ef>>" ;
+   
+   // Can alter content for mobile platforms
+   : if (is_mobile()) {
+         : print "^c^\n<TAP SCREEN to begin.<#9ef>>" ;
+   }
+   : else {
+      : print "^c^\n<CLICK or press ENTER to begin.<#9ef>>" ;
+   }
+   : press_any_key ;
+
+   ### How to Play quick screen
+   : clear_screen;
+   : print "^c^<How to Play<#ff9>>";
+   : print "^l^Type two word commands (e.g. check notes),";
+   : print "^c^choose an option in multiple choice,";
+   : print "^r^and type inputs when requested.";
+   : press_any_key ;
+   : print "";
+   : if (is_mobile()) {
+      : print "^l^Tap to proceed whenever\n you see a flashing cursor\nat the bottom right (like now).";
+   }
+   : else {
+      : print "^l^Press Enter or click to proceed\nwhenever you see a flashing cursor\nat the bottom right (like now).";
+   }
+   : print "^r^Type <Help<#ff9>> to review how to save and play.";
+   : press_any_key ;
+
+
+
+
+   : clear_screen;
+#   : set_theme "stagger_theme"; <- decided against using this here
+   : print " ";
+   : print "<Introduction<#ff9>>";
+   : print "You are a hostage negotiator at your office desk. You have just been passed a briefing folder of an ongoing hostage situation...";
+   : press_any_key ;
+   : ask_string question = "What is your name? (Officer ___)" var = "str_username" empty_is_ok = "false" ;
+   : print "Of course, you're Officer {str_username}! Just as it reads on your desk nameplate" ;
+   : press_any_key ;
+   : print "Time to get to work!";
+   : press_any_key ;
+   : clear_screen;
+#   : set_theme "LD49_theme"; <- didn't need to reset theme from stagger since decided not to change it
+
+# commented this out since decided too cluttered at start (help is noted in the game page text anyway)
+#   : gosub "sub_help" ;
+#   : clear_screen;
+
+
+}
+
+
+######################################
+#  STARTUP                           #
+######################################
+
+start_at = office
+
+
+######################################
+#  Locations                         #
+######################################
+
+locations {
+
+   office : location "You are at the office." header="office" graphic = "office_png" ;
+   phone : location "You are on the phone" header="phone call" graphic = "phone_png" ;
+   pizza : location "You are on the phone" header="phone call" graphic = "phone_pizza_png" ;
+   lady : location "You are on the phone" header="phone call" graphic = "phone_lady_png" ;
+   banker : location "You are on the phone" header="phone call" graphic = "phone_banker_png" ;
+   bank : location "" header="Royal Lion Bank" graphic = "bank_png" ;
+   # don't need a separate "end" location I think, usually is just coded as a clear screen kind of thing - only have a bank location since thought would be nice to show bank art during final scene'
+}
+
+
+######################################
+#  Objects                           #
+######################################
+
+objects {
+
+# collectibles (conspicuous objects)
+   
+   briefing_folder : scenery "a briefing folder"                                    at = "office" msg="The official briefing folder you received... a guy with a gun is holding hostages at the Royal Lion Bank downtown - the phone number is provided." ;
+
+   computer : scenery "your computer" at = "office" msg="Your work computer, connected to high speed internet!";
+
+   notebook : scenery "notebook" at = "office" msg="You always jot down important notes while investigating. <CHECK NOTES<#ff9>> or <READ NOTES<#ff9>> to check your notes.";
+ 
+   telephone : scenery "telephone" at = "office" msg="Your trusty old landline telephone - essential for your work. <CALL ___<#ff9>> to make a phone call.";
+   
+   email : scenery "an email" msg = "An email from the resident tech geek... police on scene got a photo of the hostage-taker from the bank window. The image has been run through a comprehensive database search. It led to the account <'N_org13'<#ff9>> on Instagram. Better <CHECK INSTAGRAM<#ff9>>!" ;
+   
+   receipts : scenery "receipts" msg = "Copies of receipts from purchases on Nick's account: a recent order from the <pizza place<#ff9>>, a series of expensive purchases from an <adult shop<#ff9>> that appears geared towards women, and a bank transfer out of Nick's account for a large undisclosed amount - the phone number for the <banker manager<#ff9>> who authorized the transfer is included. There's three leads you can call, given this information." ;
+
+}
+
+
+
+########################################
+#  Blocks                              #
+########################################
+
+# none - it's not that kind of location-based game'
+
+
+######################################
+#  Booleans                          #
+######################################
+
+booleans {
+   ## A boolean is something that will store a true or false fact.
+   tmp               : boolean "false" ; // something needed for when ask questions, not sure how works to be honest!
+   bool_bank_num : boolean "false" ;
+   bool_andy_jon : boolean "false" ;
+   bool_got_email : boolean "false" ;
+   bool_checked_ig_pic : boolean "false" ;
+   bool_checked_ig_followers : boolean "false" ;
+   bool_got_ig_info : dynamic_boolean {(bool_checked_ig_pic && bool_checked_ig_followers)};
+   bool_got_web_info : boolean "false" ;
+   bool_nick_org : boolean "false" ;
+   bool_got_receipts_w_three_leads : boolean "false" ; #i.e. got bundle of papers with info on three leads can call
+   bool_penelope : boolean "false" ; # info get from pizza guy
+   bool_randy : boolean "false" ; # info get from adult shop lady
+   bool_got_transfer_info : boolean "false" ; # info get from banker manager hostage
+   bool_got_save_warning : boolean "false" ;
+   bool_ending   : boolean "false" ;
+   # three endings
+   bool_tough_stupid_love : boolean "false" ;
+   bool_aggression : boolean "false" ;
+   bool_empathy : boolean "false" ;
+   
+# booleans end bracket
+}
+
+
+######################################
+#  Vocabulary                        #
+######################################
+
+vocabulary {
+   : verb { aliases = [look, inspect, observe, view, check] } // generally good to have this?
+   : noun { aliases = [phone, telephone]   }
+   : noun { aliases = [briefing, folder, brief] }
+   : noun { aliases = [bank, royal, lion] }
+   
+# vocab end bracket
+}
+
+
+########################################
+#  On Tick                             #
+########################################
+
+on_tick {
+
+   # since we only get sent to phone location in certain scenarios, do not need to account for all of them here! (the goto phone command is already limited to only certain scenarios)
+   : if (is_at "phone") {
+      # have bank num but not andy jon name yet
+      : if (bool_andy_jon == false) {
+         : gosub "sub_andy_jonson" ;
+      }
+      # have andy jon but not nick org yet - need this to initiate call with nick when will get his real name from him
+      : else_if (bool_nick_org == false) {
+         : gosub "sub_nick_org" ;
+      }
+      # have done everything except the ending - ready for final call with nick
+      : else_if (bool_ending == false) {
+         : gosub "sub_penultimate" ;
+      }
+   } # if is at phone end bracket
+   
+   # bank endings
+   : if (is_at "bank") {
+      # have bank num but not andy jon name yet
+      : if (bool_aggression == true) {
+         : gosub "sub_aggression" ;
+      }
+      # have andy jon but not nick org yet - need this to initiate call with nick when will get his real name from him
+      : else_if (bool_tough_stupid_love == true) {
+         : gosub "sub_tough_stupid_love" ;
+      }
+      # have done everything except the ending - ready for final call with nick
+      : else_if (bool_empathy == true) {
+         : gosub "sub_empathy" ;
+      }
+   } # if is at phone end bracket
+   
+}
+
+########################################
+#  Commands                            #
+########################################
+
+on_command {
+
+   #################################
+   #  ALL AREA COMMANDS GENERAL    #
+   #################################
+   
+
+   ######### CREDITS, HELP ##########
+   # Credits
+   : match "credits -; show credits; credit -; about -; about game"  {
+      : clear_screen;
+      : print "\n~~ <CREDITS<#9ef>> ~~\nGame                : The Markus Polo Hostage Situation\nGame Version        : 1.0.3 (2021-12-18)\nDevelopers           : Chris Hay aka E.R.C. (Code), Mig-Moog (Graphics), Nat aka Nathanael Wsiaki (Music/sfx)\nEngine              : Adventuron Version 1.0.0 Beta 74x (for personal use only)\nParser type         : The game requires only two word commands (VERB NOUN).\nGame Fonts          : Schmuck Symbols by mig-moog (check for Mig's copyright on the download page here: https://migmoog.itch.io/schmucksymbols)." ;
+      : press_any_key ;
+      : redescribe;
+   }
+   # HELP
+   : match "help _"  {
+      : gosub "sub_help" ;
+      : redescribe;
+   }
+   
+   ######### NOTEBOOK ##########
+   # Notebook
+   : match "check notes; read notes"  {
+      : play_incidental sound="incidental_paper";
+      : gosub "sub_notebook" ;
+   }
+
+   ######### GENERAL CLEANUP ##########
+   # (Get rid of auto responses built in for more typical adventure games.)
+   : match "drop _; remove _; north -; n -; west -; w -; east -; e -; south -; s -; go _; i -; inventory -"  {
+      : print "This is not that kind of game." ;
+   }   
+   # let player know "use" will never work
+   : match "use _"  {
+      : print "This game does not respond to the verb 'use'. You will have to find a more specific and descriptive verb to try for your command (e.g. CALL, CHECK...)." ;
+   }
+   ### Refresh for redescribe
+   : match "refresh -; look -"  {
+      : redescribe;
+   }
+   ##############################
+
+
+   ######### FOR PLAYTESTING ##########
+   ##### COMMENT OUT BEFORE FINAL #####
+   ### Actually decided to just leave in - if you find this and want to play with it then yay, good for you =)
+   # JUKEBOX to test sounds
+   : match "play list"  {
+      : print "phone1 = Phone_wSilence\nphone2 = Phone_wPickup\nphone3 = Phone_wWhat\ntype2 = Typing2longer\npaper\ncorrect\nincorrect" ;
+   }
+   : match "play phone1"  {
+      : play_incidental sound="incidental_Phone_wSilence";
+   }
+   : match "play phone2"  {
+      : play_incidental sound="incidental_Phone_wPickup";
+   }
+   : match "play phone3"  {
+      : play_incidental sound="incidental_Phone_wWhat";
+   }
+   : match "play type2"  {
+      : play_incidental sound="incidental_Typing2longer";
+   }
+   : match "play paper"  {
+      : play_incidental sound="incidental_paper";
+   }
+   : match "play correct"  {
+      : play_incidental sound="incidental_correct";
+   }
+   : match "play incorrect"  {
+      : play_incidental sound="incidental_incorrect";
+   }
+   # JUMP BOOKMARKS to different points in game
+   : match "jump list; jump bookmarks; list bookmarks; list jumps"  {
+      : print "banknum\nandyjon\nnickorg\nboolpen\nboolending" ;
+   }
+   : match "jump banknum"  {
+      : set_true "bool_bank_num" ;
+      : print "Now you can call the bank.";
+   }
+   : match "jump andyjon"  {
+      : set_true "bool_bank_num" ;
+      : set_true "bool_andy_jon" ;
+      : print "Now you know the alias name Andy Jon";
+   }
+   : match "jump nickorg"  {
+      : set_true "bool_bank_num" ;
+      : set_true "bool_andy_jon" ;
+      : set_true "bool_got_email" ;
+      : set_true "bool_checked_ig_pic" ;
+      : set_true "bool_checked_ig_followers" ;
+      : set_true "bool_got_web_info" ;
+      : set_true "bool_nick_org" ;
+      : print "Now you know Nick's real name.";
+   }
+   : match "jump boolpen"  {
+      : set_true "bool_bank_num" ;
+      : set_true "bool_andy_jon" ;
+      : set_true "bool_got_email" ;
+      : set_true "bool_checked_ig_pic" ;
+      : set_true "bool_checked_ig_followers" ;
+      : set_true "bool_got_web_info" ;
+      : set_true "bool_nick_org" ;
+      : set_true "bool_got_receipts_w_three_leads" ;
+      : set_true "bool_penelope" ;
+      : print "Now you know about Penelope.";
+   }
+   : match "jump boolending"  {
+      : set_true "bool_bank_num" ;
+      : set_true "bool_andy_jon" ;
+      : set_true "bool_got_email" ;
+      : set_true "bool_checked_ig_pic" ;
+      : set_true "bool_checked_ig_followers" ;
+      : set_true "bool_got_web_info" ;
+      : set_true "bool_nick_org" ;
+      : set_true "bool_got_receipts_w_three_leads" ;
+      : set_true "bool_penelope" ;
+      : set_true "bool_randy" ;
+      : set_true "bool_got_transfer_info" ;
+      : set_true "bool_got_save_warning" ;
+      : set_true "bool_ending" ;
+      : print "Now the ending has been triggered.";
+   }
+   ##############################
+
+
+   #################################
+   #  Office commands              #
+   #################################
+   
+   : if (is_at "office") {
+      # Description when x office
+      : match "examine office; examine room"  {
+         : redescribe;
+      } # office
+      
+      # read briefing and flip boolean
+      : match "x briefing; read briefing"  {
+         : print "It's a short briefing... basically a guy with a gun is holding hostages at the Royal Lion Bank downtown - the bank's phone number is provided.";
+         : if (bool_bank_num == false) {
+            : play_incidental sound="incidental_correct";
+            : print "-You update your notebook with the new information-";
+            : print "Now you can <CALL BANK<#ff9>>.";
+            : set_true "bool_bank_num" ;
+            : increment "int_progress" ;
+         } # if close bracket
+      } # x briefing close bracket
+      
+      : match "x receipts; read receipts; check receipts"  {
+         : print "Copies of receipts from purchases on Nick's account:";
+         : press_any_key ;
+         : print "a recent order from the <pizza place<#ff9>>,";
+         : press_any_key ;
+         : print "a series of expensive purchases from an <adult shop<#ff9>> that appears geared towards women,";
+         : press_any_key ;
+         : print "and a bank transfer out of Nick's account for a large undisclosed amount - the phone number for the <banker manager<#ff9>> who authorized the transfer is included.";
+         : press_any_key ;
+         : print "There's three leads you can call, given this information.";
+         : press_any_key ;
+         : redescribe;
+      } # x receipts close bracket
+      
+      # match search web (after got ig info)
+      : match "search web"  {
+         : if (bool_got_ig_info == false) {
+            : print "This is no time to surf the web!";
+            : press_any_key ;
+            : redescribe;
+         }
+         : else_if (bool_got_ig_info == true && bool_got_web_info == false) {
+            : gosub "sub_search_web" ;
+         }
+         : else {
+            : print "You've got all the info you need from the web. Check your notes and focus on the other pressing task at hand.";
+            : press_any_key ;
+            : redescribe;
+         }
+         
+         
+         
+      }
+      
+      
+      
+      # call bank
+      : match "call bank"  {
+         : if (bool_bank_num == false) {
+            : print "You don't know the bank's number! First you should read the briefing.";
+         }
+         ## otherwise bank num is true for all the rest
+         # scenario for if know bank num but haven't talked with criminal yet (haven't got his andy jon fake name)'
+         : else_if (bool_andy_jon == false) {
+            : print "You call the bank's number.";
+            : press_any_key ;
+            : play_incidental sound="incidental_Phone_wSilence";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : play_incidental sound="incidental_Phone_wSilence";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : play_incidental sound="incidental_Phone_wWhat";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : goto "phone";
+            : clear_screen;
+            : redescribe;  
+         }
+         ## for all the rest, you have bank num and andy jon name
+         # if haven't got all the web info yet'
+         : else_if (bool_got_web_info == false) {
+            : print "You need to do some more investigating on the web before you're ready to call the bank again...";
+         }
+         ## for all the rest, you have bank num, andy jon name, and web info
+         # but you don't have nick real name confirmed yet'
+         : else_if (bool_nick_org == false) {
+            : print "With your clues from the internet on hand, you call the bank's number.";
+            : press_any_key ;
+            : play_incidental sound="incidental_Phone_wSilence";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : play_incidental sound="incidental_Phone_wWhat";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : goto "phone";
+            : clear_screen;
+            : redescribe;
+         }
+         ## all previous ones here are now true (and may or may not have called pizza or lady yet)
+         # but you still haven't called the banker (final of 1-pizza, 2-lady, 3-banker)'
+         : else_if (bool_got_transfer_info == false) {
+            : print "You want to investigate all three leads: the pizza place, adult shop, and banker first, before calling Nick again at the bank.";
+            : press_any_key ;
+         }
+         ## ok at this point you've called the three, it's time to call back Nick at bank (final call)
+         : else_if (bool_ending == false) {
+            # special warning to save here if want to try the other endings
+            : if (bool_got_save_warning) {
+               : goto "phone";
+            }
+            : else {
+               : add_choice "Yes, I'm ready to finish this!"  {
+                  : press_any_key ;
+                  : play_incidental sound="incidental_Phone_wWhat";
+                  : print ". . .";
+                  : pause millis = "2500" ;
+                  : goto "phone";
+                  : clear_screen;
+                  : redescribe;
+               }
+               : add_choice "No, first let me <save or savef<#ff9>> so I can <load or loadf<#ff9>> on replay, to get back to this point and try different endings! Take me back to the office and I'll <call bank<#ff9>> again when I'm ready."  {
+                  : press_any_key ;
+                  : goto "office";
+                  : redescribe;
+               }
+                  : choose "Are you sure you're ready to make your final call with Nick? (Recommend save/savef beforehand, so can load/loadf to try other endings)" ;
+                  : set_true "bool_got_save_warning" ;
+            } # nested else close bracket
+         }
+         # this is the final else for call bank from office
+         : else { # read briefing / have bank num
+            : print "You call the bank's number.";
+            : press_any_key ;
+            : play_incidental sound="incidental_Phone_wWhat";
+            : print ". . .";
+            : pause millis = "2500" ;
+            : goto "phone";
+            : clear_screen;
+            : redescribe;
+         } # else close bracket
+      } # call bank command end bracket
+      
+      # check email
+      : match "check email; x email"  {
+         # only have neat response if you actually got an email
+         : if (bool_got_email == true) {
+            # message for early on when get email, before you've already got the instagram info'
+            : if (bool_got_ig_info == false) {
+               : play_incidental sound = "incidental_Typing2longer" ;
+               : print "An email from the resident tech geek... police on scene got a photo of the hostage-taker from the bank window, and now it's been run through the image search. It led to the account <'N_org13'<#ff9>> on Instagram. Better <CHECK INSTAGRAM<#ff9>>!";
+               }
+            # slightly diff message if go to check the email again after already got all the info you needed...
+            : else {
+               : print "That email from the resident tech geek that connected the hostage-taker with the 'N_org13' account on Instagram... You've got all the info you needed from there.";
+            }
+         }
+         : else {
+            : print "Besides spam, you haven't received new email in a while.";
+         }
+      }
+      
+      # check instagram
+      : match "check instagram; x instagram"  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : if (bool_got_email == true && bool_got_ig_info == false) {
+            : print "You bring up the Instagram account for '<N_org13<#ff9>>'.";
+            : play_incidental sound = "incidental_Typing2longer" ;
+            : press_any_key ;
+            : gosub "sub_check_instagram" ;
+         }
+         # After you got all the info you need from IG and updated notebook!
+         # OR
+         # in the super unlikely case someone tries to check instagram before getting the email tip off!
+         : else {
+            : print "No time to waste on social media now, you'd better work.";
+         }
+      }
+      
+      
+      ### THE THREE LEADS
+      ##   -need to limit who can call so forced to go in order! to avoid allowing you to call places more than once
+      
+      # call pizza
+      : match "call pizza; call place"  {
+         #  -only allowed if haven't already called pizza guy / if don't already know about Penelope (AND only if you've got the 2nd email with three leads, otherwise you're jumping the gun!)
+         # scenario 1 = try calling for pizza before even know it's a lead
+         # scenario 2 = try calling for pizza at the right time - after got lead but not after having already called them
+         # scenario 3 = try calling for pizza after you've already called them'
+         : if (bool_got_receipts_w_three_leads == false) {
+            : print "This is no time to be ordering pizza!";
+         }
+         : else_if (bool_got_web_info == true && bool_penelope == false) {
+            # call is initiated - convo code is under pizza location!
+
+            : print "You call the pizza place.";
+            : press_any_key ;
+            : play_incidental sound="incidental_Phone_wSilence";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : play_incidental sound="incidental_Phone_wSilence";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : play_incidental sound="incidental_Phone_wPickup";
+            : print ". . . ";
+            : pause millis = "2500" ;
+            : goto "pizza";
+            : clear_screen;
+            : redescribe;
+         }
+         : else {
+            : print "This is no time to be ordering pizza!";
+         } 
+      } # match call pizza end bracket
+      
+      
+      # call lady
+      : match "call lady; call adult; call shop"  {
+         #  -only allowed if haven't already called adult shop lady / if don't already know about Randy (AND only if you've got the 2nd email with three leads, otherwise you're jumping the gun!)
+         # scenario 1 = try calling for lady before even know she's a lead
+         # scenario 2 = try calling for lady at the right time - after got lead but not after having already called her
+         # scenario 3 = try calling for lady after you've already called her'
+         : if (bool_got_receipts_w_three_leads == false) {
+            : print "This is no time for that!";
+         }
+         : else_if (bool_got_receipts_w_three_leads == true && bool_randy == false) {
+            : if (bool_penelope) {
+               # call is initiated - convo code is under lady location!
+               : print "You call the adult shop.";
+               : press_any_key ;
+               : play_incidental sound="incidental_Phone_wSilence";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : play_incidental sound="incidental_Phone_wPickup";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : goto "lady";
+               : clear_screen;
+               : redescribe;
+               }
+            : else {
+               : print "Better to call the pizza place first.";
+               : press_any_key ;
+               : redescribe;
+            }
+         }
+         : else {
+            : print "This is no time for that!";
+         } 
+      } # match call lady end bracket
+      
+# ref code to copy into below
+
+      
+      
+      # call banker
+      : match "call banker; call manager"  {
+         #  -only allowed if haven't already called banker manager / if don't already know about transfer info (AND only if you've got the 2nd email with three leads, otherwise you're jumping the gun!) AND if have called both pizza guy and adult store lady (force banker call to be last!)
+         # scenario 1 = try calling for banker before even know he's a lead
+         # scenario 2 = try calling for banker at the right time - after got lead but not after having already called him
+            # scenario 2a: haven't called the other two yet - print message forcing you to call them first (return to office)
+            # scenario 2b: have called the other two yet - initiate call!
+         # scenario 3 = try calling for banker after you've already called him'
+         : if (bool_got_receipts_w_three_leads == false) {
+            : print "You don't have any info to call a specific banker/manager yet.";
+         }
+         : else_if (bool_got_web_info == true && bool_got_transfer_info == false) {
+            # nested ifs for whether called the other two yet or not!
+            : if (bool_penelope && bool_randy) {
+               # call is initiated - convo code is under banker location!
+               : print "You call the banker.";
+               : press_any_key ;
+               : play_incidental sound="incidental_Phone_wSilence";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : play_incidental sound="incidental_Phone_wSilence";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : play_incidental sound="incidental_Phone_wSilence";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : play_incidental sound="incidental_Phone_wSilence";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : play_incidental sound="incidental_Phone_wPickup";
+               : print ". . . ";
+               : pause millis = "2500" ;
+               : goto "banker";
+               : clear_screen;
+               : redescribe;
+            }
+            : else {
+               : print "You figure it would be better to call both the pizza place and adult shop before calling the banker manager.";
+               : press_any_key ;
+               : goto "office";
+               : redescribe;
+            }
+         }
+         : else {
+            : print "It sounded like the banker's phone got smashed - better to give Nick a call at the bank, to distract him from harassing the banker any more!";
+         } 
+      } # match call banker end bracket
+      
+      
+   } # if at office end bracket
+
+
+} # on command end bracket
+
+
+
+######################################
+#  On Describe                       #
+######################################
+
+# extra text to tack on after location description (can be conditional) - see snowshoe game for example. e.g. to tell you score and give end game option at office.
+
+on_describe {
+   # one time event popup you got email, after first call with nick and before checking internet stuff
+   : if (is_at "office") {
+      : if (bool_got_email == false && bool_andy_jon == true) {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print " ";
+         : print "You notice a new email has come in on your computer - better <CHECK EMAIL<#ff9>>!";
+         : increment "int_progress" ;
+         : create "email";
+         : press_any_key ;
+         # need this next line otherwise it loops forever
+         : set_true "bool_got_email" ;
+         : redescribe;
+      }
+      # one time event popup you got bundle of papers - after confirming nick org name on phone call with him at bank but before got bundle of papers!
+      : else_if (bool_nick_org == true && bool_got_receipts_w_three_leads == false) {
+         #
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print " ";
+         : print "You take the name <Nick Orgletzmanstein<#ff9>> to your fellow officers working on the case...";
+         : press_any_key ;
+         : print "Soon you have your next lead - copies of three recent receipts from Nick's account.";
+         : press_any_key ;
+         : print "Keep following the breadcrumps and <CHECK Receipts<#ff9>>!";
+         : create "receipts";
+         : increment "int_progress" ;
+         : set_true "bool_got_receipts_w_three_leads" ;
+         : press_any_key ;
+         # need this next line otherwise it loops forever
+         : redescribe;
+         
+      }
+      
+   }
+
+
+   #################################
+   #  Pizza commands               #
+   #################################
+
+   : if (is_at "pizza") {
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "A low, gruff voice answered the phone.";
+      : print "^r^<Heya, what can I getcha? Dine-in, pickup, or a delivery?<#b51>>";
+      : press_any_key ;
+      : print {("^l^<Actually this is Officer " + str_username + ". I'm on an urgent investigation and need your help.<#38c>>")};
+      : press_any_key ;
+      : print "^r^<Thadda fact? Well I'm Marco and I'm the own'a this joint. I know all the go-in's on in 'ere. Whaddaya wanna know?<#b51>>";
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print {("^l^<Last night, 10pm, a guy ordered two triple decker pizzas and three canned drinks. Do you remember him?<#38c>>")};
+      : press_any_key ;
+      : print {("^r^<Oh yeaaaah... Yeah, that guy. What a jerk, he was in a bad mood, seemed rich but no tip! <#b51>>")};
+      : press_any_key ;
+      : print "^l^<Did he say anything, or did you overhear him on a call?<#38c>>";
+      : press_any_key ;
+      : print {("^r^<No call, but he was muttering to 'imself! Seemed mad about his wifey... Peneleope, that was the name. Weirdo.<#b51>>")};
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "^l^<Penelope? Alright, thanks for the intel, I've gotta make some more calls...<#38c>>";
+      : press_any_key ;
+      : print {("^r^<Dona ya worry abawwt it! You order a pizza some time 'ere and we're a square.<#b51>>")};
+      : press_any_key ;
+      : print "^l^<You bet, thanks!<#38c>>";
+      : press_any_key ;
+      : set_true "bool_penelope" ;
+      : play_incidental sound="incidental_correct";
+      : print "^c^So Penelope was his wife... better call that adult shop next.";
+      : press_any_key ;
+      : print "^c^-You update your notebook with the new information-";
+      : increment "int_progress" ;
+      : press_any_key ;
+      : goto "office";
+      : redescribe;
+   }
+   
+
+   #################################
+   #  Lady commands                #
+   #################################
+
+   : if (is_at "lady") {
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "A smooth sultry voice answers the call.";
+      : print "^r^<Hello there, what can I help you with?<#b18>>";
+      : press_any_key ;
+      : print "You decide to take a different approach this time and put on a charming voice.";
+      : press_any_key ;
+      : print {("^l^<Why hello there. I'm calling on behalf of my lovely Penelope. She loves your store and I'm looking to buy her a special gift... What scents of massage oils do you have available?<#38c>>")};
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "^r^<Oh! You must be Randy. Penelope wouldn't stop talking about you the last time she visited.<#b18>>";
+      : press_any_key ;
+      : print {("^l^<I'm flattered to hear that!<#38c>>")};
+      : press_any_key ;
+      : print "^r^<Of course she's buying less expensive items now, but we're so glad she found someone better than her grumpy old husband.<#b18>>";
+      : press_any_key ;
+      : print {("^l^<Indeed I'm a much better fit for her.<#38c>>")};
+      : press_any_key ;
+      : print {("^r^<Hahaha, I'm sure... Honey, let me put you on hold while I pull up the list of our oils...<#b18>>")};
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "^c^Well, that was easy. Sounds like Nick's wife Penelope was seeing this Randy. You figure that's all the info you need so you leave the call.";
+      : set_true "bool_randy" ;
+      : play_incidental sound="incidental_correct";
+      : print "^c^-You update your notebook with the new information-";
+      : increment "int_progress" ;
+      : print "^c^Time to call the banker...";
+      : press_any_key ;
+      : goto "office";
+      : redescribe;
+   }
+   
+
+   #################################
+   #  Banker commands              #
+   #################################
+
+   : if (is_at "banker") {
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "A nervous, whispering voice answers the call.";
+      : print "^r^<...hello?<#591>>";
+      : press_any_key ;
+      : print {("^l^<Hello, this is Officer-<#38c>>")};
+      : press_any_key ;
+      : print "^r^<shhh, please, he'll hear you... I don't care who you are, just help us. We're being held hostage at the Royal Lion Bank downtown...<#591>>";
+      : press_any_key ;
+      : print "You realize the banker you've called actually happened to be one of the hostages!";
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print {("^l^<I'm the negotiator, I need some info from you. We know there was a large transfer that was made yesterday. Can you confirm the amount?<#38c>>")};
+      : press_any_key ;
+      : print {("^r^<yes, i remember... a lady transferred from a joint account... one million and three hundred fifty thousand dollars - oh no!<#591>>")};
+      : press_any_key ;
+      : print "^c^You hear a distant loud voice on the other end.";
+      : press_any_key ;
+      : print {("^r^<HEY! GIVE ME THAT CELL! ... *crunch*<#e13>>")};
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : play_incidental sound="incidental_correct";
+      : print "^c^The line went dead. Hopefully that banker is ok. The transfer amount matched what Nick asked for. Sounds like Penelope took his money and left.";
+      : set_true "bool_got_transfer_info" ;
+      : print "^c^-You update your notebook with the new information-";
+      : increment "int_progress" ;
+      : print "^c^Time to give Nick a call at the bank!";
+      : press_any_key ;
+      : goto "office";
+      : redescribe;
+   }
+
+
+}
+
+######################################
+#  On PreDescribe                    #
+######################################
+
+# this is what happens before the standard location graphic and text, etc. see "# owl event first time" under snowshoe game for example
+
+
+#################################
+#  SUBROUTINES                  #
+#################################
+
+subroutines {
+
+# music, scenes, etc. can go here
+
+# HELP MESSAGE
+
+   sub_help : subroutine {
+      : print "<HOW TO PLAY<#ff9>> - commands (and shortcuts)" ;
+      : print "<COMMANDS:<#ff9>> Type VERB NOUN combinations... e.g. 'CHECK NOTES', 'CALL BANK', or 'X PHOTO' (X is short for EXAMINE). Other parts of the game will give you options to choose and don't involve typing commands." ;
+      : print "<RESOURCES:<#ff9>> HELP to view this again, and HINT for a hint relevant to your progress in the game (no penalty)." ;
+      : print "<Other:<#ff9>> REFRESH (R) will refresh the screen. Use SAVE and LOAD if you need a break, or SAVEF/LOADF for text file saves (recommended if using incognito mode, or playing between multiple devices). QUIT will allow you to restart the game." ;
+      : press_any_key ; 
+   }
+   
+   sub_notebook : subroutine {
+      : clear_screen;
+      : print_graphic "notebook_png" width = "40" align = "center" ;
+      : if (bool_got_transfer_info) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : print "-Polo brunette with horse... Orgletzmanstein manor";
+         : print "-A.J. fake name";
+         : print "-Search Web: Orgletzmanstein - Markus father - Nick son - call bank to confirm Andy's real name!!";
+         : print "-'Nick Orgletzmanstein' confirmed!";
+         : print "-Pizza guy: Penelope name of wife, angry with";
+         : print "-Adult shop: Marriage troubles in bed... Penelope lover = Randy";
+         : print "-Bank Manager: Nick and Penelope joint account had $1,350,000 transfer recently";
+         : print "-Time to call Nick and talk him down";
+         : press_any_key ;
+         : redescribe;
+      }
+      : if (bool_randy) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : print "-Polo brunette with horse... Orgletzmanstein manor";
+         : print "-A.J. fake name";
+         : print "-Search Web: Orgletzmanstein - Markus father - Nick son - call bank to confirm Andy's real name!!";
+         : print "-'Nick Orgletzmanstein' confirmed!";
+         : print "-Pizza guy: Penelope name of wife, angry with";
+         : print "-Adult shop: Marriage troubles in bed... Penelope lover = Randy";
+         : press_any_key ;
+         : redescribe;
+      }
+      : if (bool_penelope) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : print "-Polo brunette with horse... Orgletzmanstein manor";
+         : print "-A.J. fake name";
+         : print "-Search Web: Orgletzmanstein - Markus father - Nick son - call bank to confirm Andy's real name!!";
+         : print "-'Nick Orgletzmanstein' confirmed!";
+         : print "-Pizza guy: Penelope name of wife, angry with";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else_if (bool_nick_org) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : print "-Polo brunette with horse... Orgletzmanstein manor";
+         : print "-A.J. fake name";
+         : print "-Search Web: Orgletzmanstein - Markus father - Nick son - call bank to confirm Andy's real name!!";
+         : print "-'Nick Orgletzmanstein' confirmed!";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else_if (bool_got_web_info) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : print "-Polo brunette with horse... Orgletzmanstein manor";
+         : print "-A.J. fake name";
+         : print "-Search Web: Orgletzmanstein - Markus father - Nick son - call bank to confirm Andy's real name!!";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else_if (bool_got_ig_info) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : print "-Polo brunette with horse... Orgletzmanstein manor";
+         : print "-A.J. fake name";
+         : print "-Search Web: ____";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else_if (bool_andy_jon) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : print "-Andy Jonathan? Wants $1,350,000";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else_if (bool_bank_num) {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : print "-Got bank num from brief, can call bank";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else {
+         : print "You review the notes in your notebook:";
+         : print "-Read briefing";
+         : press_any_key ;
+         : redescribe;
+      }
+   } # sub_notebook end bracket
+   
+   ##### SUBROUTINE SCENES #######
+   
+   sub_andy_jonson : subroutine {
+      # First time call hostage-taker - learn his fake name and amount of money he wants
+      # fought long and hard for this next line of code... to get special string input in middle of sentence to appear in same colour as surrounding text! usually would use {} but not in this case. Present Quest by Errol remains invaluable reference code!
+      : press_any_key ;
+      : print {("^l^<This is Officer " + str_username + ", I'm calling to negotiate with you... What is your name?<#38c>>")};
+      : press_any_key ;
+      : print "^r^<Yeah, right. Call me... Andy Jonathan. Heh, yeah...<#e13>>";
+      : press_any_key ;
+      : play_incidental sound = "incidental_correct" ;
+      : print "^l^<Alright, thanks, Andy. Now what is it that you want?<#38c>>";
+      : press_any_key ;
+      : print "^r^<Listen, all I want is what was taken from me - one million, three hundred fifty thousand dollars. Transfer it to my account, let me go free, and everybody else goes free too. This is an unstable situation for you!<#e13>>";
+      : press_any_key ;
+      : set_true "bool_andy_jon" ;
+      : play_incidental sound="incidental_correct";
+      : print "^c^-You update your notebook with the new information-";
+      : increment "int_progress" ;
+      : press_any_key ;
+      # special code, similar to clear screen but retains status bar and 2nd line is to add back location graphic =) Courtesy of Chris A on Adventuron Discord
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : add_choice "We don't pay criminals"  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<We don't pay criminals around here.<#38c>>";
+         : press_any_key ;
+         : print "^r^<Well you'd better pay me! *click*<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : press_any_key ;
+         : print "He hung up...";
+         : press_any_key ;
+      }
+      : add_choice "Let the hostages out first."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<First let the hostages go.<#38c>>";
+         : press_any_key ;
+         : print "^r^<You wish! You call yourself a negotiator?! *click*.<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : press_any_key ;
+         : print "He hung up...";
+         : press_any_key ;
+      }
+      : add_choice "Why do you want all that money?"  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Andy, why do you want that money? What is it for?<#38c>>";
+         : press_any_key ;
+         : print "^r^<My Nunya.<#e13>>";
+         : press_any_key ;
+         : print "^l^<What exactly is a nunya?<#38c>>";
+         : press_any_key ;
+         : print "^r^<Nunya damn business! Ha! *click*<#e13>>";
+         : press_any_key ;
+         : print "He hung up...";
+         : press_any_key ;
+      }
+         : choose "What will you say next?" ;
+      # after any of the choice scenarios went through (irregardless of if player made right choice or not, they get the bool flipped and put back in office)   
+      : goto "office";
+      : redescribe;
+   }
+   
+   sub_check_instagram : subroutine {
+      : if (bool_checked_ig_pic == false) {
+         : add_choice "Look at the account's photos."  {
+            : clear_screen hide_status_bar = "false" ;
+            : print_graphic ;
+            : print "There's only one photo: a <brunette<#ff9>> woman in <polo<#ff9>> gear, next to a horse. The name <Orgletzmanstein<#ff9>> is inscribed on an archway. The caption is just '#goodtimes #yolopolo'.";
+            : set_true "bool_checked_ig_pic" ;
+            : print_graphic "instagram_png"  width = "40" align = "center" ;
+            : press_any_key ;
+            : gosub "sub_check_instagram" ;
+         }
+      }
+      : if (bool_checked_ig_followers == false) {
+         : add_choice "Look at the account's followers."  {
+            : clear_screen hide_status_bar = "false" ;
+            : print_graphic ;
+            : print "There's only a handful of followers, and most of them appear to be scantily-clad female bots." ;
+            : press_any_key ;
+            : print "There are two other accounts that appear real, but are private: <'andy_baker84'<#ff9>> and <'jon.coachringer.is.rich'<#ff9>>. Guess that's where <'Andy Jonathan'<#ff9>> got his name from - his two friends." ;
+            : set_true "bool_checked_ig_followers" ;
+            : press_any_key ;
+            : gosub "sub_check_instagram" ;
+         }
+      }
+      : add_choice "Leave instagram - return to office"  {
+         : if (bool_got_ig_info == false) {
+            : print "There's still more for you to investigate on Instagram!";
+            : press_any_key ;
+            : clear_screen hide_status_bar = "false" ;
+            : print_graphic ;
+            : gosub "sub_check_instagram" ;
+         }
+         : else {
+            : clear_screen hide_status_bar = "false" ;
+            : print_graphic ;
+            : print "^c^-Before closing off Instagram, you update your notebook with the new information-";
+            : increment "int_progress" ;
+            : play_incidental sound = "incidental_correct" ;
+            : press_any_key ;
+            : print "Next you should try to <SEARCH WEB<#ff9>> on keywords you found, to see if you can find more info.";
+            : press_any_key ;
+            : redescribe;
+         }
+      }
+         : choose "What would you like to investigate?" ;
+            
+   }
+   
+   sub_search_web : subroutine {
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : ask_string question = "What will you type in the search engine?" var = "str_websearch" empty_is_ok = "false" ;
+      # no need for press any key here because already is paused for input! (right? see if sound goes through)
+      : play_incidental sound = "incidental_Typing2longer" ;
+      : print "You search for '{str_websearch}'..." ;
+      : press_any_key ;
+      : if (lower(str_websearch) == "orgletzmanstein") { # || str_websearch == "??? whatever other options may want to allow later"
+         ### story about finding the info on Markus and Nick Org!
+         : print "Yes! You find a website about a rich pesticide producer named Markus Orgletzmanstein...";
+         : press_any_key ;
+         : print "There's a large photo of two men. The caption reads <'Markus and son Nick Orgletzmanstein have revolutionized the pesticide manufacturing business!'<#ff9>>" ;
+         : press_any_key ;
+         : set_true "bool_got_web_info" ;
+         : play_incidental sound="incidental_correct";
+         : print "^c^-You update your notebook with the new information-";
+         : increment "int_progress" ;
+         : press_any_key ;
+         : print "Better <CALL BANK<#ff9>> again and see if you can confirm Andy Jonathan's real name!";
+         : press_any_key ;
+         : redescribe;
+      }
+      : else_if (int_websearchattempts > 2) {
+         : increment "int_websearchattempts" ;
+         : print "...but all that's coming up are silly cat gifs!";
+         : press_any_key ;
+         : print "You'll have to try searching something else.";
+         : press_any_key ;
+         : print "From that instagram photo, the name '<orgletzmanstein<#ff9>>' seemed important...";
+         : press_any_key ;
+         : gosub "sub_search_web" ;
+      }
+      : else {
+         : increment "int_websearchattempts" ;
+         : print "...but all that's coming up are silly cat gifs!";
+         : press_any_key ;
+         : print "You'll have to try searching something else.";
+         : press_any_key ;
+         : gosub "sub_search_web" ;
+      }
+      
+      
+      
+      
+   }
+   
+   sub_nick_org : subroutine {
+      # second convo with hostage-taker, after did internet research and confirmed his real name is nick
+      : add_choice "Let’s be honest with each other Andy. Your real name is Markus Orgletzmanstein."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Let’s be honest with each other Andy. Your real name is Markus Orgletzmanstein.<#38c>>";
+         : press_any_key ;
+         : print "^r^<You idiot! What kind of a dummy do they have working on this? *click*<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : press_any_key ;
+         : print "He hung up... maybe <CHECK NOTES<#ff9>> and try again";
+         : press_any_key ;
+      }
+      : add_choice "Are you Nick Orgletzmanstein, son of Markus?"  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Are you Nick Orgletzmanstein, son of Markus?<#38c>>";
+         : press_any_key ;
+         : print "^r^<$@*7#&(!!! *click*.<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : press_any_key ;
+         : print "He hung up... you're probably right, but you won't get confirmation with such a direct approach. You'd better try again.";
+         : press_any_key ;
+      }
+      : add_choice "Listen, Andy, you know anything about polo?"  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Listen, Andy, you know anything about polo?<#38c>>";
+         : press_any_key ;
+         : print "^r^<That’s the name I picked? Jeeze. All I know is some certain bitches like to play it.<#e13>>";
+         : press_any_key ;
+         : print "^l^<Are the bitches brunettes, by any chance?<#38c>>";
+         : press_any_key ;
+         : print "^r^<Yeah I’m done with this. You’re no better than that annoying wench saying 'NICK I WANT THIS or NICK I WANT THAT' *click*<#e13>>";
+         : press_any_key ;
+         : print "He hung up..." ;
+         : press_any_key ;
+         : print "...but in his anger he confirmed his real name.";
+         : press_any_key ;
+         : set_true "bool_nick_org" ;
+         : play_incidental sound="incidental_correct";
+         : print "^c^ -You update your notebook with the new information-";
+         : increment "int_progress" ;
+         : press_any_key ;
+      }
+         : choose "What should you say to the hostage-taker?" ;
+      # after any of the choice scenarios went through (irregardless of if player made right choice or not, they put back in office)   
+      : goto "office";
+      : redescribe;
+   }
+   
+   sub_penultimate : subroutine {
+      # first half of final convo with Nick, leading to second half final convo
+      #: clear_screen hide_status_bar = "false" ;
+      #: print_graphic ;
+      : add_choice "Nick, listen, I know about Penelope..."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Nick, listen, I know about Penelope...<#38c>>";
+         : press_any_key ;
+         : print "^r^<What?! How do you know her name?! I don't EVER want to hear her name again! *click*<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : press_any_key ;
+         : print "He hung up... maybe try a different approach.";
+         : press_any_key ;
+         : goto "office";
+         : redescribe;
+      }
+      : add_choice "Nick, listen, I know about the money you lost..."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Nick, listen, I know about the money you lost...<#38c>>";
+         : press_any_key ;
+         : print "^r^<WHAT?! I didn't LOSE anything, it was stolen from me! /SHE/ should be in prison! ARGHHH!!! *click*.<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : press_any_key ;
+         : print "He hung up... maybe try a different approach.";
+         : press_any_key ;
+         : goto "office";
+         : redescribe;
+      }
+      : add_choice "Nick, listen, I know what it's like to have a loved one take advantage of you. You have every right to be upset..."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Nick, listen, I know what it's like to have a loved one take advantage of you. You have every right to be upset...<#38c>>";
+         : play_incidental sound="incidental_correct";
+         : set_true "bool_ending" ;
+         : press_any_key ;
+         : print "^r^<Damn right I'm angry! Why else do you think I'm HERE pointing a GUN at people?! I hate her cheating GUTS!<#e13>>";
+         : press_any_key ;
+         : print "^l^<Nick, it's not your fault, there's no excuse for what she did to you. But you need to be better than her. Don't hurt other innocent people.<#38c>>";
+         : press_any_key ;
+         : print "^r^<...how could she do me so wrong?<#e13>>";
+         : press_any_key ;
+         : gosub "sub_ending" ;
+      }
+         : choose "What will you say to Nick?" ;
+
+   }
+   
+   sub_ending : subroutine {
+      # second half of final convo with Nick, leading to ending
+      # first clean up the screen
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      # three choices
+      : add_choice "I promise I’ll help you through this case, we’ll recover the money transfered and walk away from this. Just don’t harm the hostages and surrender. If you cooperate, it’ll just be a short sentence."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<I promise I’ll help you through this case, we’ll recover the money transfered and walk away from this. Just don’t harm the hostages and surrender. If you cooperate, it’ll just be a short sentence.<#38c>>";
+         : play_incidental sound="incidental_correct";
+         : set_true "bool_ending" ;
+         : set_true "bool_empathy" ;
+         : press_any_key ;
+         : print "^r^<You really think I could just get the money back? Hmm... well that would sure show her! I know a good lawyer, now that I think of it... Ok, ok, ok... *click*<#e13>>";
+         : press_any_key ;
+      }
+      : add_choice "I’m sorry this happened to you, but the law is the law, and your actions have consequences. Hold on and I'll come to the bank in-person."  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<I’m sorry this happened to you, but the law is the law, and your actions have consequences. Hold on and I'll come to the bank in-person.<#38c>>";
+         : press_any_key ;
+         : print "^r^<Alright, you'd better come in unarmed. Otherwise you'll wish you hadn't. See you soon, he he... *click*<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ; 
+         : set_true "bool_ending" ;
+         : set_true "bool_tough_stupid_love" ;
+         : press_any_key ;
+      }
+      : add_choice "Listen Nick, time is up. If you don’t let the hostages out right now, the police are coming in with force!"  {
+         : clear_screen hide_status_bar = "false" ;
+         : print_graphic ;
+         : print "^l^<Listen Nick, time is up. If you don’t let the hostages out right now, the police are coming in with force!<#38c>>";
+         : press_any_key ;
+         : print "^r^<*click*<#e13>>";
+         : play_incidental sound = "incidental_incorrect" ;
+         : set_true "bool_ending" ;
+         : set_true "bool_aggression" ;
+         : press_any_key ;
+      }
+         : choose "How will you end this with Nick?" ;
+      # in any case, next the story goes to the bank. What will happen there will depend on which of these you chose.
+      : print "He hung up... You head to the bank, hoping things will turn out for the best.";
+      : press_any_key ;
+      : goto "bank";
+      : redescribe;
+   }
+   
+   sub_aggression : subroutine {
+      # aggressive bad ending
+      : print "You pull up at the bank just in time to see the police rushing in.";
+      : press_any_key ;
+      : print "Multiple gun shots ring out, and a few seconds later you see screaming hostages running out of the bank... several appear injured from physical abuse, and one is bleeding severly from a gunshot wound.";
+      : press_any_key ;
+      : print "Finally the cops come out, dragging a cuffed Nick. He is unconscious and it appears he was shot in the leg...";
+      : press_any_key ;
+      : clear_screen;
+      : stop_music ;
+      : print "^c^<Bad ending: aggression<#ff9>>";
+      : print "^c^That probably could have gone better... but congrats on finishing the game, and thanks for playing.";
+      : print_graphic "gun_png"  width = "40" align = "center" ;
+      : play_incidental sound="incidental_bad_ending";
+      : pause millis = "5500" ;
+      : lose_game;
+   }
+   
+   sub_tough_stupid_love : subroutine {
+      # stupid tough love bad ending
+      : print "You pull up at the bank and the cops on scene rush you into the bank, unarmed, as per the agreement.";
+      : press_any_key ;
+      : print "In the bank, you see the anxious hostages sitting in a corner, and an angry Nick pointing a gun.";
+      : press_any_key ;
+      : print "...";
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "The cops outside wait in anticipation...";
+      : press_any_key ;
+      : print "Moments after you entered the bank, Nick emerges holding you in front of him with his gun to your head - using you as a human shield. Uh oh!";
+      : press_any_key ;
+      : print "^r^<Nick: Drop your weapons and give me a car!<#e13>>";
+      : press_any_key ;
+      : print "To your surprise and relief, the cops comply. Once Nick gets in the car and starts it, he throws you away, slams the door, and drives off...";
+      : press_any_key ;
+      : clear_screen;
+      : print "^c^<Bad ending: stupid tough love<#ff9>>";
+      : stop_music ;
+      : print_graphic "gun_png"  width = "40" align = "center" ;
+      : print "^c^That probably could have gone better... but congrats on finishing the game, and thanks for playing.";
+      : play_incidental sound="incidental_bad_ending";
+      : pause millis = "5500" ;
+      : lose_game;
+   }
+   
+   sub_empathy : subroutine {
+      # stupid tough love bad ending
+      : print "You pull up at the bank, hop out of your car, and stand at a distance from the bank entrance, surrounded by the cops on scene.";
+      : press_any_key ;
+      : print "Moments later, Nick emerges from the bank with his hands up.";
+      : press_any_key ;
+      : clear_screen hide_status_bar = "false" ;
+      : print_graphic ;
+      : print "You yell out to Nick:";
+      : print {("^l^<This is Officer " + str_username + ", your negotiator from over the phone! You're doing the right thing!<#38c>>")};
+      : press_any_key ;
+      : print "^r^<Yeah, whatever, hero! I changed my mind, I'm too old for this. I'll get my best lawyer and hope there's pizza in prison.<#e13>>";
+      : press_any_key ;
+      : print "^l^<I'll deliver you a good triple decker!<#38c>>";
+      : press_any_key ;
+      : print "^c^The cops rush forward to cuff Nick. He complies. Meanwhile other cops retrieve the hostages. They appear stressed but otherwise unscathed.";
+      : press_any_key ;
+      : clear_screen;
+      : stop_music ;
+      : print "^c^<Good ending: the empathic negotiator<#ff9>>";
+      : print "^c^Well done! You're a pro negotiator.";
+      : print "^c^Congrats on finishing the game, and thanks for playing.";
+      : print_graphic "pizza_png"  width = "40" align = "center" ;
+      : play_incidental sound="incidental_good_ending";
+      : pause millis = "5500" ;
+      : win_game ;
+   }
+   
+} # subroutines end bracket
+
+##########################
+## ASSETS               ##
+##########################
+
+assets {
+
+   sounds {
+      # MUSIC
+      music_loop : sound_sample "loop.wav";
+      # SOUND EFFECTS
+      incidental_Phone_wSilence : sound_sample "Phone_wSilence.wav";
+      incidental_Phone_wPickup : sound_sample "Phone_wPickup.wav";
+      incidental_Phone_wWhat : sound_sample "Phone_wWhat.wav";
+      incidental_Typing2longer : sound_sample "Typing2longer.wav";
+      incidental_paper : sound_sample "Paper.wav";
+      incidental_correct : sound_sample "Correct.wav";
+      incidental_incorrect : sound_sample "Incorrect.wav";
+      incidental_good_ending : sound_sample "Good_ending.wav";
+      incidental_bad_ending : sound_sample "Bad_ending.wav";
+   } # sounds
+
+   graphics {
+      # FULL SIZE LOCATIONS
+      office_png : png "office.png";
+      phone_png : png "phone.png" ;
+      phone_pizza_png : png "phone_pizza.png" ;
+      phone_lady_png : png "phone_lady.png" ;
+      phone_banker_png : png "phone_banker.png" ;
+      bank_png : png "bank.png";
+      
+      # HALF SIZE LOCATIONS
+      title_png : png "title.png";
+      gun_png : png "gun.png";
+      pizza_png : png "pizza.png";
+      instagram_png : png "instagram.png";
+      notebook_png : png "notebook.png";
+         # later could add notebook overlays of adding more and more text notes to the graphic, corresponding with diff int_progress levels - see snowshoe game map asset overlays example code
+   } # graphics end bracket
+   
+   fonts {
+      userfont_schmucksymbols : base64_ttf horz_pixels = "8" vert_pixels = "10" font_scale_multiplier = "1.0" experimental_line_height_ratio = "1.5" snap_vert = "true" "AAEAAAAKAIAAAwAgT1MvMlvTa7cAAAEoAAAAYGNtYXABcAJ2AAADDAAAAdBnbHlmYQil5gAABmQAACR4aGVhZFuC+8IAAACsAAAANmhoZWEHggNiAAAA5AAAACRobXR4hAA9gAAAAYgAAAGEbG9jYQAHHVwAAATcAAABiG1heHAAcAA6AAABCAAAACBuYW1lLJ7wRQAAKtwAAAL3cG9zdABpADQAAC3UAAAAIAABAAAAAQAA//dWFl8PPPUAAAQAAAAAAHw322IAAAAAfDfbYgAAAAAEAAQAAAAACAACAAEAAAAAAAEAAAMA/wAAAAQAAAAAAASAAAEAAAAAAAAAAAAAAAAAAABhAAEAAABhADgADgAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAgQAAZAABQAEAgACAAAA/4ACAAIAAAACAAAzAMwAAAAABAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAWUFMLgBAACAAfgMA/wAAAAMAAQAAAAABAAAAAAOAA4AAAAAgAAAEAAAABAAAAAQAAAAEAAGABAABAAQAAAAEAACABAAAAAQAAAAEAAGABAABAAQAAYAEAAEABAABAAQAAYAEAAEABAABgAQAAIAEAACABAABAAQAAIAEAAEABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAABgAQAAYAEAAEABAAAgAQAAYAEAAEABAAAAAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAABAAQAAIAEAAEABAABAAQAAAAEAAEABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAACABAAAgAQAAIAEAAEABAACAAQAAQAEAACAAAAAAgAAAAMAAAAUAAMAAQAAAPIABADeAAAABAAEAAEAAAB+//8AAAAg////4gABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABADeAAAABAAEAAEAAAB+//8AAAAg////4gABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAAAHAAAAEgAAAB/AAAAzwAAAQoAAAEYAAABKwAAAT4AAAFcAAABbwAAAX0AAAGGAAABjwAAAbMAAAHWAAAB5AAAAgQAAAIcAAACNAAAAkkAAAJmAAACewAAAqMAAALGAAAC1AAAAucAAAMGAAADFAAAAzMAAANUAAADhAAAA5wAAAO3AAAD1AAAA+wAAAP/AAAEDwAABC4AAARBAAAEVAAABGwAAASEAAAEjwAABKcAAAS/AAAE1wAABO0AAAUKAAAFJQAABU0AAAVbAAAFbgAABYYAAAWeAAAFuwAABdMAAAXyAAAGAAAABiQAAAYyAAAGUQAABloAAAZoAAAGgAAABpsAAAa4AAAG0AAABuMAAAbzAAAHEgAAByUAAAc4AAAHUAAAB2gAAAdzAAAHiwAAB6MAAAe7AAAH0QAAB+4AAAgJAAAIMQAACD8AAAhSAAAIagAACIIAAAifAAAItwAACNYAAAjpAAAI8gAACQUAAAkeAACAYAAAAKAA4AAAwAHAAABAQEBAQEBAQGAAQAAAP8AAAABAAAA/wADgAAA/gAAAP+AAAD/AAAAAAIBAAMAAoAEAAADAAcAAAEBAQEBAQEBAQAAgAAA/4ABAACAAAD/gAQAAAD/AAAAAQAAAP8AAAAAAgAAAAAEAAQAABsAHwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAACAAAABAAAAAIAAAAEAAAD/AAAAAQAAAP8AAAD/gAAA/wAAAP+AAAD/AAAAAQAAAP8AAAABAACAAAABAAAABAAAAP8AAAABAAAA/wAAAP+AAAD/AAAA/4AAAP8AAAABAAAA/wAAAAEAAAAAgAAAAQAAAACAAAD/gP8AAAABAAAEAIAAAAMABAAAGwAfACMAJwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGAAIAAAAEAAAD/AAAAAIAAAP+AAAAAgAAA/4AAAP+AAAD/gAAAAIAAAP+AAAAAgAAA/4AAAACA/wAAgAAA/4ACAACAAAD/gP4AAIAAAP+ABAAAAP+AAAD/gAAA/4AAAP+AAAD/AAAA/4AAAP+AAAAAgAAAAIAAAAEAAAAAgAAAAIAAAACAAAD/gAAA/4AAAP+AAAD/AAAAAIAAAP+AAAAADgAAAAAEAAQAAAMABwALAA8AEwAXABsAHwAjACcAKwAvADMANwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAgAEAAAD/AP+AAIAAAP+AAYAAgAAA/4ABgACAAAD/gP+AAIAAAP+A/gABAAAA/wABgACAAAD/gP+AAIAAAP+AAQABAAAA/wD+gACAAAD/gAEAAIAAAP+AAYAAgAAA/4D9AACAAAD/gAIAAQAAAP8ABAAAAP+AAAAAAAAA/wAAAAEAAAD/AAAAAQAAAP+AAAAAAAAA/4AAAAAAAAD/gAAAAIAAAP+AAAAAAAAA/4AAAACAAAD/gAAAAAAAAP+AAAAAgAAA/wAAAAEAAAD/AAAAAIAAAP+AAAAAAAAA/4AAAAAGAAAAAAQABAAAAwAHAB0AIQAlACkAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAAYAAAP6A/4AAgAAA/4ACAACAAAABAAAA/4AAAACAAAD/AAAA/gAAAAGAAAAAgAAA/4AAAP6AAAABgAGAAIAAAP+A/IAAgAAA/4ADgACAAAD/gAQAAAD/gAAAAAAAAP8AAAABAAAA/oAAAP+AAAD/gAAA/4AAAP+AAAAAgAAAAIAAAACAAAAAgAAAAIAAAAAAAAD/gAAAAAAAAP6AAAAAAAAA/4AAAAAAAAEBgAKAAoAEAAAHAAABAQEBAQEBAQIAAIAAAP+AAAD/gAAAAIAEAAAA/wAAAP+AAAABAAAAAAAAAQEAAIACgAOAAAsAAAEBAQEBAQEBAQEBAQGAAQAAAP+AAAAAgAAA/wAAAP+AAAAAgAOAAAD/gAAA/gAAAP+AAAAAgAAAAgAAAAAAAAEBgACAAwADgAALAAABAQEBAQEBAQEBAQEBgAEAAAAAgAAA/4AAAP8AAAAAgAAA/4ADgAAA/4AAAP4AAAD/gAAAAIAAAAIAAAAAAAADAQACAAMABAAACwAPABMAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAYABAAAAAIAAAP+AAAD/AAAA/4AAAACA/4AAgAAA/4ABgACAAAD/gAQAAAD/gAAA/4AAAP+AAAAAgAAAAIAAAP8AAAD/gAAAAIAAAP+AAAAAAAABAQABAAOAA4AACwAAAQEBAQEBAQEBAQEBAgAAgAAAAQAAAP8AAAD/gAAA/wAAAAEAA4AAAP8AAAD/gAAA/wAAAAEAAAAAgAAAAAAAAQGAAAACgAGAAAcAAAEBAQEBAQEBAgAAgAAA/4AAAP+AAAAAgAGAAAD/AAAA/4AAAAEAAAAAAAABAQACAAMAAoAAAwAAAQEBAQEAAgAAAP4AAoAAAP+AAAAAAAABAYAAgAKAAYAAAwAAAQEBAQGAAQAAAP8AAYAAAP8AAAAAAAAGAIAAgAOAA4AAAwAHAAsADwATABcAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQMAAIAAAP+A/4AAgAAA/4D/gACAAAD/gP+AAIAAAP+A/4AAgAAA/4D/gACAAAD/gAOAAAD/gAAAAAAAAP+AAAAAAAAA/4AAAAAAAAD/gAAAAAAAAP+AAAAAAAAA/4AAAAADAIAAAAOAA4AACwARABcAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAgAAAACAAAD/gAAA/gAAAP+AAAAAgACAAAAAgAAAAIAAAP+AAAD/gAAAAQAAAAOAAAD/gAAA/YAAAP+AAAAAgAAAAoAAAAAA/wAAAACAAAAAgP6A/4AAAP+AAAABAAAAAAEBAAAAAoADgAAHAAABAQEBAQEBAQGAAQAAAP8AAAD/gAAAAIADgAAA/IAAAAKAAAAAgAAAAAAAAgCAAAADAAOAABEAFQAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAYAAAACAAAD/gAAA/wAAAAGAAAD9gAAAAIAAAAEAAAD/AP+AAIAAAP+AA4AAAP+AAAD/AAAA/4AAAP8AAAD/gAAAAYAAAACAAAABAAAAAAAAAP+AAAAAAAABAQAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQEAAgAAAACAAAD/gAAA/gAAAAGAAAD+gAAAAYAAAP6AA4AAAP+AAAD9gAAA/4AAAACAAAABAAAAAIAAAAEAAAAAAAACAIAAAAMAA4AACQAPAAABAQEBAQEBAQEBAQEBAQEBAYABgAAA/wAAAP6AAAAAgAAAAIAAgAAA/4AAAAEAAAADgAAA/IAAAAGAAAABAAAAAIAAAAAA/4AAAP+AAAABAAABAIAAAAOAA4AADQAAAQEBAQEBAQEBAQEBAQEAgAMAAAD+AAAAAgAAAP+AAAD9gAAAAgAAAP4AA4AAAP+AAAD/AAAA/oAAAP+AAAAAgAAAAQAAAAACAIAAAAOAA4AADwATAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEAAoAAAP4AAAABgAAAAIAAAP+AAAD+AAAA/4AAAACAAIAAAAEAAAADgAAA/4AAAP8AAAD/gAAA/wAAAP+AAAAAgAAAAoAAAP6A/wAAAAEAAAEAgAAAA4ADgAANAAABAQEBAQEBAQEBAQEBAQCAAwAAAP+AAAD/gAAA/wAAAACAAAAAgAAA/gADgAAA/oAAAP8AAAD/AAAAAYAAAAEAAAAAgAAAAAMAgAAAA4ADgAATABcAGwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAgAAAACAAAD/gAAAAIAAAP+AAAD+AAAA/4AAAACAAAD/gAAAAIAAgAAAAQAAAP8AAAABAAAAA4AAAP+AAAD/gAAA/4AAAP6AAAD/gAAAAIAAAAGAAAAAgAAAAIAAAAAA/4AAAACA/wD+gAAAAYAAAAADAIAAAAMAA4AADwATABcAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAYAAAACAAAD/gAAA/oAAAAEAAAD/AAAA/4AAAACAAIAAAACAAAD+gACAAAD/gAOAAAD/gAAA/YAAAP+AAAAAgAAAAQAAAACAAAABAAAAAAD/AAAAAQD+AAAA/4AAAAAAAAIBgACAAoADgAADAAcAAAEBAQEBAQEBAYABAAAA/wAAAAEAAAD/AAOAAAD/AAAA/wAAAP8AAAAAAgGAAIACgAOAAAMACwAAAQEBAQEBAQEBAQEBAYABAAAA/wAAgACAAAD/gAAA/4AAAACAA4AAAP8AAAD/gAAA/wAAAP+AAAABAAAAAAUBAAEAAoADgAADAAcACwAPABMAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAgAAgAAA/4D/gACAAAD/gP+AAIAAAP+AAIAAgAAA/4AAgACAAAD/gAOAAAD/gAAAAAAAAP+AAAAAAAAA/4AAAAAAAAD/gAAAAAAAAP+AAAAAAAACAIABAAOAAoAAAwAHAAABAQEBAQEBAQCAAwAAAP0AAAADAAAA/QACgAAA/4AAAP+AAAD/gAAAAAUBgAEAAwADgAADAAcACwAPABMAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAYAAgAAA/4AAgACAAAD/gACAAIAAAP+A/4AAgAAA/4D/gACAAAD/gAOAAAD/gAAAAAAAAP+AAAAAAAAA/4AAAAAAAAD/gAAAAAAAAP+AAAAAAAAFAQAAAAOABAAAAwAHAAsAEQAVAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAYABgAAA/oD/gACAAAD/gAIAAIAAAP+A/wABAAAA/4AAAP+AAAAAgAAA/4AEAAAA/4AAAAAAAAD/AAAAAQAAAP6AAAAAAAAA/4AAAP+AAAD/gAAA/4AAAAAFAAAAAAQABAAACwAVABkAHQAhAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAIADAAAAAIAAAP+AAAD9AAAA/4AAAACAAIAAAP+AAAAAgAAAAIAAAAGAAAAAAAAAAIAAAP4AAAABAAAA/oAAAAIAAAAEAAAA/4AAAP0AAAD/gAAAAIAAAAMAAAAAAP+AAAD+AAAAAYAAAACAAAAAgP+A/oAAAAGA/4D/AAAAAQD+gP+AAAAAgAACAIAAAAOAA4AACwAPAAABAQEBAQEBAQEBAQEBAQEBAQACAAAAAIAAAP8AAAD/AAAA/wAAAACAAIAAAAEAAAADgAAA/4AAAP0AAAABgAAA/oAAAAMAAAAAAP8AAAABAAADAIAAAAOAA4AACQANABEAAAEBAQEBAQEBAQEBAQEBAQEBAQCAAoAAAACAAAD/gAAAAIAAAP0AAQAAAAEAAAD/AAAAAQAAAAOAAAD/gAAA/wAAAP+AAAD+gAAAAwD/AAAAAQD+gP8AAAABAAABAIAAAAOAA4AAEwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAIAAAAAgAAA/wAAAP8AAAABAAAAAQAAAP+AAAD+AAAA/4AAAACAA4AAAP+AAAD/gAAAAIAAAP2AAAAAgAAA/4AAAP+AAAAAgAAAAoAAAAAAAAIAgAAAA4ADgAAHAA8AAAEBAQEBAQEBAQEBAQEBAQEAgAKAAAAAgAAA/4AAAP2AAQAAAACAAAAAgAAA/4AAAAOAAAD/gAAA/YAAAP+AAAADAP2AAAAAgAAAAYAAAACAAAEAgAAAA4ADgAALAAABAQEBAQEBAQEBAQEAgAMAAAD+AAAAAYAAAP6AAAACAAAA/QADgAAA/4AAAP8AAAD/gAAA/wAAAP+AAAAAAAABAIAAAAOAA4AACQAAAQEBAQEBAQEBAQCAAwAAAP4AAAABgAAA/oAAAP8AA4AAAP+AAAD/AAAA/4AAAP6AAAAAAQCAAAADgAOAABUAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAIAAAAAgAAA/wAAAP8AAAABAAAA/4AAAAGAAAD/gAAA/gAAAP+AAAAAgAOAAAD/gAAA/4AAAACAAAD9gAAAAQAAAACAAAD+gAAA/4AAAACAAAACgAAAAAEAgAAAA4ADgAALAAABAQEBAQEBAQEBAQEAgAEAAAABAAAAAQAAAP8AAAD/AAAA/wADgAAA/oAAAAGAAAD8gAAAAYAAAP6AAAAAAAABAIAAAAOAA4AACwAAAQEBAQEBAQEBAQEBAIADAAAA/wAAAAEAAAD9AAAAAQAAAP8AA4AAAP+AAAD+AAAA/wAAAAEAAAACAAAAAAAAAQCAAAADgAOAAA8AAAEBAQEBAQEBAQEBAQEBAQEBAAKAAAD/gAAA/4AAAP6AAAD/gAAAAQAAAACAAAD/AAOAAAD/gAAA/YAAAP+AAAAAgAAAAQAAAP8AAAACgAAAAAAAAQCAAAADAAOAAA8AAAEBAQEBAQEBAQEBAQEBAQEAgAEAAAAAgAAAAQAAAP+AAAAAgAAA/wAAAP+AAAD/AAOAAAD+gAAAAYAAAP6AAAD/gAAA/oAAAAEAAAD/AAAAAAAAAQCAAAADAAOAAAUAAAEBAQEBAQCAAQAAAAGAAAD9gAOAAAD9gAAA/wAAAAABAIAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQCAAYAAAACAAAABAAAA/4AAAP+AAAD/gAAA/4AAAP8AA4AAAP+AAAAAgAAA/IAAAAIAAAD/AAAAAQAAAP4AAAAAAAABAIAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQCAAQAAAACAAAAAgAAAAQAAAP8AAAD/gAAA/4AAAP8AA4AAAP+AAAD/AAAAAYAAAPyAAAAAgAAAAQAAAP6AAAAAAAACAIAAAAOAA4AACwAPAAABAQEBAQEBAQEBAQEBAQEBAQACAAAAAIAAAP+AAAD+AAAA/4AAAACAAIAAAAEAAAADgAAA/4AAAP2AAAD/gAAAAIAAAAKAAAAAAP2AAAACgAACAIAAAAOAA4AACQANAAABAQEBAQEBAQEBAQEBAQCAAoAAAACAAAD/gAAA/oAAAP8AAQAAAAEAAAADgAAA/4AAAP6AAAD/gAAA/wAAAAMA/oAAAAGAAAAAAgCAAAADgAOAAA8AEwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAIAAAAAgAAA/4AAAACAAAD/AAAA/oAAAP+AAAAAgACAAAABAAAAA4AAAP+AAAD+AAAA/4AAAP+AAAAAgAAAAIAAAAIAAAAAAP4AAAACAAACAIAAAAOAA4AADQARAAABAQEBAQEBAQEBAQEBAQEBAQEAgAKAAAAAgAAA/4AAAACAAAD/AAAA/wAAAP8AAQAAAAEAAAADgAAA/4AAAP8AAAD/gAAA/oAAAAGAAAD+gAAAAwD/AAAAAQAAAAADAIAAAAOAA4AAEwAXABsAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAIAAAD+gAAAAYAAAACAAAD/gAAA/gAAAAGAAAD+gAAA/4AAAACAAgAAgAAA/4D9gACAAAD/gAOAAAD/gAAA/wAAAP+AAAD/AAAA/4AAAACAAAABAAAAAIAAAAEAAAAAAAAA/4AAAP6AAAD/gAAAAAAAAQCAAAADgAOAAAcAAAEBAQEBAQEBAIADAAAA/wAAAP8AAAD/AAOAAAD/gAAA/QAAAAMAAAAAAAABAIAAAAOAA4AACwAAAQEBAQEBAQEBAQEBAIABAAAAAQAAAAEAAAD/gAAA/gAAAP+AA4AAAP2AAAACgAAA/QAAAP+AAAAAgAAAAAAAAQCAAAADgAOAAA8AAAEBAQEBAQEBAQEBAQEBAQEAgAEAAAABAAAAAQAAAP+AAAD/gAAA/wAAAP+AAAD/gAOAAAD+AAAAAgAAAP2AAAD/gAAA/4AAAACAAAAAgAAAAAAAAQCAAAADgAOAAA8AAAEBAQEBAQEBAQEBAQEBAQEAgAEAAAAAgAAAAIAAAACAAAAAgAAA/4AAAP4AAAD/gAOAAAD9gAAAAoAAAP2AAAACgAAA/QAAAP+AAAAAgAAAAAAAAQCAAAADAAOAABMAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAIABAAAAAIAAAAEAAAD/gAAAAIAAAP8AAAD/gAAA/wAAAACAAAD/gAOAAAD/AAAAAQAAAP6AAAD/gAAA/oAAAAEAAAD/AAAAAYAAAACAAAAAAAABAIAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQCAAQAAAAEAAAABAAAA/4AAAP+AAAD/AAAA/4AAAP+AA4AAAP8AAAABAAAA/wAAAP+AAAD+AAAAAgAAAACAAAAAAAABAIAAAAOAA4AAFQAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAAwAAAP+AAAD/gAAA/4AAAP+AAAACAAAA/QAAAACAAAAAgAAAAIAAAP6AA4AAAP8AAAD/gAAA/4AAAP+AAAD/gAAA/4AAAAGAAAAAgAAAAIAAAACAAAAAAQEAAIACgAOAAAcAAAEBAQEBAQEBAQABgAAA/wAAAAEAAAD+gAOAAAD/gAAA/gAAAP+AAAAAAAAGAIAAgAOAA4AAAwAHAAsADwATABcAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAAIAAAP+AAIAAgAAA/4AAgACAAAD/gACAAIAAAP+AAIAAgAAA/4AAgACAAAD/gAOAAAD/gAAAAAAAAP+AAAAAAAAA/4AAAAAAAAD/gAAAAAAAAP+AAAAAAAAA/4AAAAABAQAAgAKAA4AABwAAAQEBAQEBAQEBAAGAAAD+gAAAAQAAAP8AA4AAAP0AAAAAgAAAAgAAAAAAAAUBAAKAA4AEAAADAAcACwAPABMAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAgAAgAAA/4D/gACAAAD/gAEAAIAAAP+A/oAAgAAA/4ACAACAAAD/gAQAAAD/gAAAAAAAAP+AAAAAgAAA/4AAAAAAAAD/gAAAAIAAAP+AAAAAAAABAAAAAAQAAIAAAwAAAQEBAQAABAAAAPwAAIAAAP+AAAAAAAABAQADAAKABAAABwAAAQEBAQEBAQEBAAEAAAAAgAAA/wAAAP+ABAAAAP+AAAD/gAAAAIAAAAAAAAIAgAAAA4ADgAALAA8AAAEBAQEBAQEBAQEBAQEBAQEBAAIAAAAAgAAA/wAAAP8AAAD/AAAAAIAAgAAAAQAAAAOAAAD/gAAA/QAAAAGAAAD+gAAAAwAAAAAA/wAAAAEAAAMAgAAAA4ADgAAJAA0AEQAAAQEBAQEBAQEBAQEBAQEBAQEBAIACgAAAAIAAAP+AAAAAgAAA/QABAAAAAQAAAP8AAAABAAAAA4AAAP+AAAD/AAAA/4AAAP6AAAADAP8AAAABAP6A/wAAAAEAAAEAgAAAA4ADgAATAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEAAgAAAACAAAD/AAAA/wAAAAEAAAABAAAA/4AAAP4AAAD/gAAAAIADgAAA/4AAAP+AAAAAgAAA/YAAAACAAAD/gAAA/4AAAACAAAACgAAAAAAAAgCAAAADgAOAAAcADwAAAQEBAQEBAQEBAQEBAQEBAQCAAoAAAACAAAD/gAAA/YABAAAAAIAAAACAAAD/gAAAA4AAAP+AAAD9gAAA/4AAAAMA/YAAAACAAAABgAAAAIAAAQCAAAADgAOAAAsAAAEBAQEBAQEBAQEBAQCAAwAAAP4AAAABgAAA/oAAAAIAAAD9AAOAAAD/gAAA/wAAAP+AAAD/AAAA/4AAAAAAAAEAgAAAA4ADgAAJAAABAQEBAQEBAQEBAIADAAAA/gAAAAGAAAD+gAAA/wADgAAA/4AAAP8AAAD/gAAA/oAAAAABAIAAAAOAA4AAFQAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAgAAAACAAAD/AAAA/wAAAAEAAAD/gAAAAYAAAP+AAAD+AAAA/4AAAACAA4AAAP+AAAD/gAAAAIAAAP2AAAABAAAAAIAAAP6AAAD/gAAAAIAAAAKAAAAAAQCAAAADgAOAAAsAAAEBAQEBAQEBAQEBAQCAAQAAAAEAAAABAAAA/wAAAP8AAAD/AAOAAAD+gAAAAYAAAPyAAAABgAAA/oAAAAAAAAEAgAAAA4ADgAALAAABAQEBAQEBAQEBAQEAgAMAAAD/AAAAAQAAAP0AAAABAAAA/wADgAAA/4AAAP4AAAD/AAAAAQAAAAIAAAAAAAABAIAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQEAAoAAAP+AAAD/gAAA/oAAAP+AAAABAAAAAIAAAP8AA4AAAP+AAAD9gAAA/4AAAACAAAABAAAA/wAAAAKAAAAAAAABAIAAAAMAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQCAAQAAAACAAAABAAAA/4AAAACAAAD/AAAA/4AAAP8AA4AAAP6AAAABgAAA/oAAAP+AAAD+gAAAAQAAAP8AAAAAAAABAIAAAAMAA4AABQAAAQEBAQEBAIABAAAAAYAAAP2AA4AAAP2AAAD/AAAAAAEAgAAAA4ADgAAPAAABAQEBAQEBAQEBAQEBAQEBAIABgAAAAIAAAAEAAAD/gAAA/4AAAP+AAAD/gAAA/wADgAAA/4AAAACAAAD8gAAAAgAAAP8AAAABAAAA/gAAAAAAAAEAgAAAA4ADgAAPAAABAQEBAQEBAQEBAQEBAQEBAIABAAAAAIAAAACAAAABAAAA/wAAAP+AAAD/gAAA/wADgAAA/4AAAP8AAAABgAAA/IAAAACAAAABAAAA/oAAAAAAAAIAgAAAA4ADgAALAA8AAAEBAQEBAQEBAQEBAQEBAQEBAAIAAAAAgAAA/4AAAP4AAAD/gAAAAIAAgAAAAQAAAAOAAAD/gAAA/YAAAP+AAAAAgAAAAoAAAAAA/YAAAAKAAAIAgAAAA4ADgAAJAA0AAAEBAQEBAQEBAQEBAQEBAIACgAAAAIAAAP+AAAD+gAAA/wABAAAAAQAAAAOAAAD/gAAA/oAAAP+AAAD/AAAAAwD+gAAAAYAAAAACAIAAAAOAA4AADwATAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEAAgAAAACAAAD/gAAAAIAAAP8AAAD+gAAA/4AAAACAAIAAAAEAAAADgAAA/4AAAP4AAAD/gAAA/4AAAACAAAAAgAAAAgAAAAAA/gAAAAIAAAIAgAAAA4ADgAANABEAAAEBAQEBAQEBAQEBAQEBAQEBAQCAAoAAAACAAAD/gAAAAIAAAP8AAAD/AAAA/wABAAAAAQAAAAOAAAD/gAAA/wAAAP+AAAD+gAAAAYAAAP6AAAADAP8AAAABAAAAAAMAgAAAA4ADgAATABcAGwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAgAAAP6AAAABgAAAAIAAAP+AAAD+AAAAAYAAAP6AAAD/gAAAAIACAACAAAD/gP2AAIAAAP+AA4AAAP+AAAD/AAAA/4AAAP8AAAD/gAAAAIAAAAEAAAAAgAAAAQAAAAAAAAD/gAAA/oAAAP+AAAAAAAABAIAAAAOAA4AABwAAAQEBAQEBAQEAgAMAAAD/AAAA/wAAAP8AA4AAAP+AAAD9AAAAAwAAAAAAAAEAgAAAA4ADgAALAAABAQEBAQEBAQEBAQEAgAEAAAABAAAAAQAAAP+AAAD+AAAA/4ADgAAA/YAAAAKAAAD9AAAA/4AAAACAAAAAAAABAIAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQCAAQAAAAEAAAABAAAA/4AAAP+AAAD/AAAA/4AAAP+AA4AAAP4AAAACAAAA/YAAAP+AAAD/gAAAAIAAAACAAAAAAAABAIAAAAOAA4AADwAAAQEBAQEBAQEBAQEBAQEBAQCAAQAAAACAAAAAgAAAAIAAAACAAAD/gAAA/gAAAP+AA4AAAP2AAAACgAAA/YAAAAKAAAD9AAAA/4AAAACAAAAAAAABAIAAAAMAA4AAEwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEAgAEAAAAAgAAAAQAAAP+AAAAAgAAA/wAAAP+AAAD/AAAAAIAAAP+AA4AAAP8AAAABAAAA/oAAAP+AAAD+gAAAAQAAAP8AAAABgAAAAIAAAAAAAAEAgAAAA4ADgAAPAAABAQEBAQEBAQEBAQEBAQEBAIABAAAAAQAAAAEAAAD/gAAA/4AAAP8AAAD/gAAA/4ADgAAA/wAAAAEAAAD/AAAA/4AAAP4AAAACAAAAAIAAAAAAAAEAgAAAA4ADgAAVAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAIADAAAA/4AAAP+AAAD/gAAA/4AAAAIAAAD9AAAAAIAAAACAAAAAgAAA/oADgAAA/wAAAP+AAAD/gAAA/4AAAP+AAAD/gAAAAYAAAACAAAAAgAAAAIAAAAABAQAAgAMAA4AACwAAAQEBAQEBAQEBAQEBAYABgAAA/wAAAAEAAAD+gAAA/4AAAACAA4AAAP+AAAD+AAAA/4AAAAGAAAAAgAAAAAAAAQIAAIACgAOAAAMAAAEBAQECAACAAAD/gAOAAAD9AAAAAAAAAQEAAIADAAOAAAsAAAEBAQEBAQEBAQEBAQEAAYAAAACAAAD/gAAA/oAAAAEAAAD/AAOAAAD/AAAA/4AAAP6AAAAAgAAAAgAAAAAAAAQAgAMAA4AEAAADAAcACwAPAAABAQEBAQEBAQEBAQEBAQEBAQABAAAA/wACAACAAAD/gP2AAIAAAP+AAYABAAAA/wAEAAAA/4AAAACAAAD/gAAAAAAAAP+AAAAAgAAA/4AAAAAAABYBDgABAAAAAAAAAAMAAAABAAAAAAABAAwAAwABAAAAAAACAAcADwABAAAAAAADAAwAFgABAAAAAAAEABQAIgABAAAAAAAFAAsANgABAAAAAAAGAAsAQQABAAAAAAAJAA4ATAABAAAAAAAKACwAWgABAAAAAAANABcAhgABAAAAAAATAAYAnQADAAEECQAAAAYAowADAAEECQABABgAqQADAAEECQACAA4AwQADAAEECQADABgAzwADAAEECQAEACgA5wADAAEECQAFABYBDwADAAEECQAGABYBJQADAAEECQAJABwBOwADAAEECQAKAFgBVwADAAEECQANAC4BrwADAAEECQATAAwB3ShjKU15c3RlcnkgRm9udFJlZ3VsYXJNeXN0ZXJ5IEZvbnRNeXN0ZXJ5IEZvbnQgUmVndWxhclZlcnNpb24gMS4wTXlzdGVyeUZvbnRZb3UsIG9mIGNvdXJzZVN3ZWV0IGZvbnRzIHRvIGxlYXZlIHlvdXIgd29ycmllcyBiZWhpbmQgeW91WW91IGhhdmUgdGhlIHBlcm1pc3Npb25IZWxsbyEAKABjACkATQB5AHMAdABlAHIAeQAgAEYAbwBuAHQAUgBlAGcAdQBsAGEAcgBNAHkAcwB0AGUAcgB5ACAARgBvAG4AdABNAHkAcwB0AGUAcgB5ACAARgBvAG4AdAAgAFIAZQBnAHUAbABhAHIAVgBlAHIAcwBpAG8AbgAgADEALgAwAE0AeQBzAHQAZQByAHkARgBvAG4AdABZAG8AdQAsACAAbwBmACAAYwBvAHUAcgBzAGUAUwB3AGUAZQB0ACAAZgBvAG4AdABzACAAdABvACAAbABlAGEAdgBlACAAeQBvAHUAcgAgAHcAbwByAHIAaQBlAHMAIABiAGUAaABpAG4AZAAgAHkAbwB1AFkAbwB1ACAAaABhAHYAZQAgAHQAaABlACAAcABlAHIAbQBpAHMAcwBpAG8AbgBIAGUAbABsAG8AIQAAAwAAAAAAAABmADMAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+   }
+}
