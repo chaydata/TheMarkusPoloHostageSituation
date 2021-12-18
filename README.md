@@ -11,6 +11,7 @@ I decided to post the source code in case others making games in Adventuron want
 ## Links
 [\~Play the game\~](https://eldritchrenaissancecake.itch.io/the-markus-polo-hostage-situation)  
 [\~Learn all about Adventuron\~](https://adventuron.io/)  
+[\~Take "Tutorial A" to write your first Adventuron game\~](https://adventuron.io/documentation/tutorial-a.html)  
 [\~Join the Adventuron Discord\~](https://discord.gg/QWxVmNvkC7)  
 [\~Follow me on other platforms\~](https://linktr.ee/EldritchRenaissanceCake)  
 
